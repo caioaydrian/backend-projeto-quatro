@@ -1,0 +1,3 @@
+function soltaRubrica() {
+    Douglas: "professor"
+}
