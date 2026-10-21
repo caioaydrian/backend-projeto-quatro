@@ -1,0 +1,21 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+build/Release
+node_modules/
+*.tsbuildinfo
+.npm
+.env
+.env.*
+!.env.example
+.next
+out
+dist
+.output
+.cache/
+.temp
+.vscode-test
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+.vite/
