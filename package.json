@@ -1,0 +1,20 @@
+{
+  "name": "backend-projeto-quatro",
+  "version": "1.0.0",
+  "description": "Backend completo do Quarto Projeto da faculdade de TADS.",
+  "homepage": "https://github.com/caioaydrian/backend-projeto-quatro#readme",
+  "bugs": {
+    "url": "https://github.com/caioaydrian/backend-projeto-quatro/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/caioaydrian/backend-projeto-quatro.git"
+  },
+  "license": "ISC",
+  "author": "caio, valmir",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
