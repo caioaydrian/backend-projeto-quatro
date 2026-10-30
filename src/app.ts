@@ -1,5 +1,6 @@
 import express, { type Express, type Request, type Response } from "express";
 import { connectToDb } from "./database/sequelize.js";
+import "./models/index.js";
 
 const app: Express = express();
 

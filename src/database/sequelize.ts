@@ -3,8 +3,8 @@ import { Sequelize } from "sequelize";
 export const sequelize = new Sequelize({
   dialect: "mysql",
   database: "coffee_db",
-  username: "root",
-  password: "",
+  username: "coffee_user",
+  password: "coffee_password",
   port: 3306,
   host: "localhost",
 });
