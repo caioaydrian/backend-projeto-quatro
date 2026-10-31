@@ -12,7 +12,7 @@ export class UserController {
   static validateCPF(cpf: string) {
     if (typeof cpf !== "string") return false;
 
-  // tudo que não é numero é tirado
+    // tudo que não é numero é tirado
     const cleanCPF = cpf.replace(/\D/g, "");
 
     if (cleanCPF.length !== 11) return false;
@@ -217,7 +217,7 @@ export class UserController {
         if (!passwordValidation.isValid) {
           return res.status(400).json({ error: passwordValidation.message });
         }
-        user.password = password;
+        user.setPassword(password);
       }
 
       if (role !== undefined) {
