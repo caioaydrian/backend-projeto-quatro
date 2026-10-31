@@ -7,6 +7,5 @@
 - Validação de nível de segurança da senha
 - Validação de email
 
-[] Classe de modelo para usuários (UserModel com busca, criação, atualização e exclusão)
-[] Classe de serviço para usuários (UserService com busca, criação, atualização, exclusão e validação de dados)
+[x] Classe de modelo para usuários (UserModel com busca, criação, atualização e exclusão)
 [] Classe de controlador para usuários (UserController com rotas para criação, login, atualização e exclusão de usuários)
