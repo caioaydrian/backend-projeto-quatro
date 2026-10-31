@@ -2,12 +2,35 @@ import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../database/sequelize.js";
 
 export class User extends Model {
-  declare id: number;
-  declare name: string;
-  declare email: string;
-  declare password: string;
-  declare cpf: string;
-  declare role: string;
+  declare public id: number;
+  declare public name: string;
+  declare private password: string;
+  declare public role: string;
+
+  get email(): string {
+    return this.getDataValue("email");
+  }
+  set email(value: string) {
+    this.setDataValue("email", value.trim().toLowerCase());
+  }
+
+  get cpf(): string {
+    return this.getDataValue("cpf");
+  }
+  set cpf(value: string) {
+    this.setDataValue("cpf", value.replace(/\D/g, ""));
+  }
+
+  public setPassword(password: string) {
+    if (!password || password.length < 8) {
+      throw new Error("A senha deve ter no mínimo 8 caracteres.");
+    }
+    this.setDataValue("password", password);
+  }
+
+  public checkPassword(password: string) {
+    return this.getDataValue("password") === password;
+  }
 }
 
 User.init(
