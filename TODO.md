@@ -8,4 +8,4 @@
 - Validação de email
 
 [x] Classe de modelo para usuários (UserModel com busca, criação, atualização e exclusão)
-[] Classe de controlador para usuários (UserController com rotas para criação, login, atualização e exclusão de usuários)
+[x] Classe de controlador para usuários (UserController com rotas para criação, login, atualização e exclusão de usuários)
