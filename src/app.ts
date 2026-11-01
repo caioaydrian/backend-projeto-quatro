@@ -1,3 +1,4 @@
+import cors from "cors";
 import express, { type Express, type Request, type Response } from "express";
 import { connectToDb } from "./database/sequelize.js";
 import "./models/index.js";
@@ -5,6 +6,11 @@ import { userRoutes } from "./routes/user.routes.js";
 
 const app: Express = express();
 
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  })
+);
 app.use(express.json());
 
 connectToDb().then(() => {});
