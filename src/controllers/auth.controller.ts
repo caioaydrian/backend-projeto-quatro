@@ -1,4 +1,5 @@
 import { type Request, type Response } from "express";
+import jwt from "jsonwebtoken";
 import { User } from "../models/user.js";
 import { UserController } from "./user.controller.js";
 
@@ -70,6 +71,58 @@ export class AuthController {
       });
     } catch (error) {
       console.error("Error during user registration:", error);
+      return res.status(500).json({ error: "Internal server error." });
+    }
+  }
+
+  static async login(req: Request, res: Response) {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password || typeof email !== "string" || typeof password !== "string") {
+        return res.status(400).json({
+          error: "Fields email and password are required.",
+        });
+      }
+
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const user = await User.findOne({
+        where: { email: normalizedEmail },
+      });
+
+      const isPasswordValid = user ? await user.checkPassword(password) : false;
+
+      if (!user || !isPasswordValid) {
+        return res.status(401).json({
+          error: "Invalid email or password.",
+        });
+      }
+
+      const secret = process.env.JWT_SECRET || "default_jwt_secret_key";
+      const token = jwt.sign(
+        {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        },
+        secret,
+        {
+          expiresIn: "1d",
+          algorithm: "HS256",
+        }
+      );
+
+      const userJson = user.toJSON();
+      delete userJson.password;
+
+      return res.status(200).json({
+        message: "Login successful.",
+        token,
+        user: userJson,
+      });
+    } catch (error) {
+      console.error("Error during login:", error);
       return res.status(500).json({ error: "Internal server error." });
     }
   }

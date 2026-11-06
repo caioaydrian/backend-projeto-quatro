@@ -1,10 +1,11 @@
+import bcrypt from "bcrypt";
 import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../database/sequelize.js";
 
 export class User extends Model {
   declare public id: number;
   declare public name: string;
-  declare private password: string;
+  declare public password: string;
   declare public role: string;
 
   get email(): string {
@@ -28,8 +29,17 @@ export class User extends Model {
     this.setDataValue("password", password);
   }
 
-  public checkPassword(password: string) {
-    return this.getDataValue("password") === password;
+  public async checkPassword(password: string) {
+    const currentPassword = this.getDataValue("password");
+    if (!currentPassword) return false;
+    try {
+      if (await bcrypt.compare(password, currentPassword)) {
+        return true;
+      }
+    } catch {
+      // Ignora erro se não for formato bcrypt válido
+    }
+    return currentPassword === password;
   }
 }
 
@@ -67,5 +77,23 @@ User.init(
     sequelize: sequelize,
     modelName: "User",
     tableName: "users",
+    hooks: {
+      beforeCreate: async (user: User) => {
+        const rawPassword = user.getDataValue("password");
+        if (rawPassword && !rawPassword.startsWith("$2")) {
+          const hashedPassword = await bcrypt.hash(rawPassword, 10);
+          user.setDataValue("password", hashedPassword);
+        }
+      },
+      beforeUpdate: async (user: User) => {
+        if (user.changed("password")) {
+          const rawPassword = user.getDataValue("password");
+          if (rawPassword && !rawPassword.startsWith("$2")) {
+            const hashedPassword = await bcrypt.hash(rawPassword, 10);
+            user.setDataValue("password", hashedPassword);
+          }
+        }
+      },
+    },
   }
 );
