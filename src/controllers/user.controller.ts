@@ -101,6 +101,20 @@ export class UserController {
       const cleanCPF = cpf.replace(/\D/g, "");
       const normalizedEmail = email.trim().toLowerCase();
 
+      const existingEmail = await User.findOne({
+        where: { email: normalizedEmail },
+      });
+      if (existingEmail) {
+        return res.status(409).json({ error: "Email is already registered." });
+      }
+
+      const existingCPF = await User.findOne({
+        where: { cpf: cleanCPF },
+      });
+      if (existingCPF) {
+        return res.status(409).json({ error: "CPF is already registered." });
+      }
+
       const user = await User.create({
         name: name.trim(),
         email: normalizedEmail,
@@ -113,7 +127,7 @@ export class UserController {
       delete userJson.password;
 
       return res.status(201).json({
-        message: "User registered successfully.",
+        message: "User created successfully.",
         user: userJson,
       });
     } catch (error) {

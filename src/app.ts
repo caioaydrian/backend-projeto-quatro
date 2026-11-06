@@ -2,6 +2,7 @@ import cors from "cors";
 import express, { type Express, type Request, type Response } from "express";
 import { connectToDb } from "./database/sequelize.js";
 import "./models/index.js";
+import { authRoutes } from "./routes/auth.routes.js";
 import { userRoutes } from "./routes/user.routes.js";
 
 const app: Express = express();
@@ -15,6 +16,7 @@ app.use(express.json());
 
 connectToDb().then(() => {});
 
+app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 
 app.get("/", (req: Request, res: Response) => {
