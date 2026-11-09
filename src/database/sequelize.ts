@@ -2,11 +2,11 @@ import { Sequelize } from "sequelize";
 
 export const sequelize = new Sequelize({
   dialect: "mysql",
-  database: "coffee_db",
-  username: "coffee_user",
-  password: "coffee_password",
-  port: 3306,
-  host: "localhost",
+  database: process.env.DB_NAME,
+  username: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  port: Number(process.env.DB_PORT),
+  host: process.env.DB_HOST,
 });
 
 export async function connectToDb() {

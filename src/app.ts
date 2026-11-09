@@ -1,3 +1,4 @@
+import "dotenv/config";
 import cors from "cors";
 import express, { type Express, type Request, type Response } from "express";
 import { connectToDb } from "./database/sequelize.js";
@@ -6,10 +7,12 @@ import { authRoutes } from "./routes/auth.routes.js";
 import { userRoutes } from "./routes/user.routes.js";
 
 const app: Express = express();
+const port = process.env.PORT || 3000;
+const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:5173";
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: corsOrigin,
   })
 );
 app.use(express.json());
@@ -26,6 +29,6 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
 });
 
-app.listen(3000, () => {
-  console.log("Server is running on http://localhost:3000");
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
 });
