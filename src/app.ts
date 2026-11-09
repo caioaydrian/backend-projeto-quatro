@@ -16,7 +16,10 @@ app.use(express.json());
 
 connectToDb().then(() => {});
 
+// rotas públicas
 app.use("/auth", authRoutes);
+
+// Rotas privadas
 app.use("/users", userRoutes);
 
 app.get("/", (req: Request, res: Response) => {
