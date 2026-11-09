@@ -43,3 +43,16 @@
    - Mantenha consultas e modificações seguras usando exclusivamente os métodos nativos dos models do Sequelize.
 4. **Validação Obrigatória:**
    - Após qualquer alteração no código TypeScript, valide a compilação com `npm run build` para garantir que não há erros de tipagem ou sintaxe.
+
+## Proteção de Arquivos Sensíveis e Credenciais (.env)
+
+1. **Acesso Negado a Arquivos `.env`:**
+   - É terminantemente proibido ler, abrir, listar ou inspecionar o conteúdo de arquivos de ambiente (`.env`, `.env.*`, `*.env`).
+   - Se novas variáveis de configuração forem necessárias, adicione apenas seus nomes (com valores vazios ou exemplos genéricos) no `.env.example`.
+2. **Não Exposição de Credenciais:**
+   - Nunca imprima, mencione ou exponha valores de variáveis de ambiente (`process.env.*`), tokens, chaves secretas ou senhas no chat, em mensagens de commit ou em saídas de log.
+   - Em caso de erros de conexão (ex.: banco de dados), oculte credenciais e strings de conexão de logs e de respostas HTTP retornadas ao cliente.
+3. **Prevenção de Versionamento de Segredos:**
+   - Nunca crie arquivos com segredos em disco fora dos caminhos ignorados pelo Git.
+   - Certifique-se sempre de que `.env` permaneça listado no `.gitignore`.
+
