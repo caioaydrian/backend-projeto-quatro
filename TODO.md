@@ -9,3 +9,7 @@
 
 [x] Classe de modelo para usuários (UserModel com busca, criação, atualização e exclusão)
 [x] Classe de controlador para usuários (UserController com rotas para criação, login, atualização e exclusão de usuários)
+[] Adicionar .env e .env.example e usar no sequelize.ts
+[x] Hash de senha com bcrypt
+[x] Separar a rota de cadastro de usuários da rota de register
+[] Skill para IA para tratar de segurança
