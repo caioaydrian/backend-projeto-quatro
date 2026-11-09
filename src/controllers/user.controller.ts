@@ -177,6 +177,10 @@ export class UserController {
         return res.status(400).json({ error: "Invalid user ID." });
       }
 
+      if (req.user?.id !== id) {
+        return res.status(403).json({ error: "Access denied. You can only edit your own user." });
+      }
+
       const user = await User.findByPk(id);
 
       if (!user) {
@@ -185,54 +189,43 @@ export class UserController {
 
       const { name, email, password, cpf, role } = req.body;
 
-      if (name !== undefined) {
-        if (typeof name !== "string" || !name.trim()) {
-          return res.status(400).json({ error: "Name cannot be empty." });
-        }
-        user.name = name.trim();
+      if (email !== undefined && email.trim().toLowerCase() !== user.email) {
+        return res.status(400).json({ error: "Email cannot be updated." });
       }
 
-      if (email !== undefined) {
-        if (!UserController.validateEmail(email)) {
-          return res.status(400).json({ error: "Invalid email format." });
-        }
-        const normalizedEmail = email.trim().toLowerCase();
-        const existingEmail = await User.findOne({
-          where: {
-            email: normalizedEmail,
-            id: { [Op.ne]: id },
-          },
+      if (!name || !cpf || !password) {
+        return res.status(400).json({
+          error: "Fields name, cpf, and password are required.",
         });
-        if (existingEmail) {
-          return res.status(409).json({ error: "Email is already registered for another user." });
-        }
-        user.email = normalizedEmail;
       }
 
-      if (cpf !== undefined) {
-        if (!UserController.validateCPF(cpf)) {
-          return res.status(400).json({ error: "Invalid CPF." });
-        }
-        const cleanCPF = cpf.replace(/\D/g, "");
-        const existingCPF = await User.findOne({
-          where: {
-            cpf: cleanCPF,
-            id: { [Op.ne]: id },
-          },
-        });
-        if (existingCPF) {
-          return res.status(409).json({ error: "CPF is already registered for another user." });
-        }
-        user.cpf = cleanCPF;
+      if (typeof name !== "string" || !name.trim()) {
+        return res.status(400).json({ error: "Name cannot be empty." });
       }
 
-      if (password !== undefined) {
-        const passwordValidation = UserController.validatePasswordLevel(password);
-        if (!passwordValidation.isValid) {
-          return res.status(400).json({ error: passwordValidation.message });
-        }
-        user.setPassword(password);
+      if (!UserController.validateCPF(cpf)) {
+        return res.status(400).json({ error: "Invalid CPF." });
       }
+
+      const cleanCPF = cpf.replace(/\D/g, "");
+      const existingCPF = await User.findOne({
+        where: {
+          cpf: cleanCPF,
+          id: { [Op.ne]: id },
+        },
+      });
+      if (existingCPF) {
+        return res.status(409).json({ error: "CPF is already registered for another user." });
+      }
+
+      const passwordValidation = UserController.validatePasswordLevel(password);
+      if (!passwordValidation.isValid) {
+        return res.status(400).json({ error: passwordValidation.message });
+      }
+
+      user.name = name.trim();
+      user.cpf = cleanCPF;
+      user.setPassword(password);
 
       if (role !== undefined) {
         user.role = role;
