@@ -7,6 +7,7 @@ import { authRoutes } from "./routes/auth.routes.js";
 import { userRoutes } from "./routes/user.routes.js";
 import { categoryRoutes } from "./routes/category.routes.js";
 import { drinkRoutes } from "./routes/drink.routes.js";
+import { saleRoutes } from "./routes/sale.routes.js";
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/drinks", drinkRoutes);
+app.use("/sales", saleRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
