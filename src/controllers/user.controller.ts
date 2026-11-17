@@ -1,6 +1,6 @@
 import { type Request, type Response } from "express";
 import { Op } from "sequelize";
-import { User } from "../models/user.js";
+import { Sale, User } from "../models/index.js";
 
 export class UserController {
   static validateEmail(email: string) {
@@ -257,6 +257,13 @@ export class UserController {
 
       if (!user) {
         return res.status(404).json({ error: "User not found." });
+      }
+
+      const salesCount = await Sale.count({ where: { userId: id } });
+      if (salesCount > 0) {
+        return res.status(400).json({
+          error: "Cannot delete user because they have associated sales.",
+        });
       }
 
       await user.destroy();

@@ -1,5 +1,5 @@
 import { type Request, type Response } from "express";
-import { Category, Drink } from "../models/index.js";
+import { Category, Drink, SaleItem } from "../models/index.js";
 import { formatPaginatedResponse, getPagination } from "../utils/pagination.js";
 
 export class DrinkController {
@@ -159,6 +159,13 @@ export class DrinkController {
       const drink = await Drink.findByPk(id);
       if (!drink) {
         return res.status(404).json({ error: "Drink not found." });
+      }
+
+      const salesCount = await SaleItem.count({ where: { drinkId: id } });
+      if (salesCount > 0) {
+        return res.status(400).json({
+          error: "Cannot delete drink because it is associated with existing sales.",
+        });
       }
 
       await drink.destroy();
