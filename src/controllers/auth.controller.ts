@@ -85,6 +85,12 @@ export class AuthController {
         });
       }
 
+      if (!UserController.validateEmail(email)) {
+        return res.status(400).json({
+          error: "Invalid email format.",
+        });
+      }
+
       const normalizedEmail = email.trim().toLowerCase();
 
       const user = await User.findOne({

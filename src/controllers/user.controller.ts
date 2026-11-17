@@ -1,6 +1,7 @@
 import { type Request, type Response } from "express";
 import { Op } from "sequelize";
 import { Sale, User } from "../models/index.js";
+import { formatPaginatedResponse, getPagination } from "../utils/pagination.js";
 
 export class UserController {
   static validateEmail(email: string) {
@@ -138,10 +139,16 @@ export class UserController {
 
   static async findAll(req: Request, res: Response) {
     try {
-      const users = await User.findAll({
+      const { page, limit, offset } = getPagination(req);
+
+      const { count, rows } = await User.findAndCountAll({
         attributes: { exclude: ["password"] },
+        limit,
+        offset,
+        order: [["id", "ASC"]],
       });
-      return res.status(200).json(users);
+
+      return res.status(200).json(formatPaginatedResponse(rows, count, page, limit));
     } catch (error) {
       console.error("Error fetching users:", error);
       return res.status(500).json({ error: "Internal server error." });
@@ -189,14 +196,18 @@ export class UserController {
 
       const { name, email, password, cpf, role } = req.body;
 
-      if (email !== undefined && email.trim().toLowerCase() !== user.email) {
-        return res.status(400).json({ error: "Email cannot be updated." });
+      if (!name || !email || !cpf || !password) {
+        return res.status(400).json({
+          error: "Fields name, email, cpf, and password are required.",
+        });
       }
 
-      if (!name || !cpf || !password) {
-        return res.status(400).json({
-          error: "Fields name, cpf, and password are required.",
-        });
+      if (typeof email !== "string" || !UserController.validateEmail(email)) {
+        return res.status(400).json({ error: "Invalid email format." });
+      }
+
+      if (email.trim().toLowerCase() !== user.email) {
+        return res.status(400).json({ error: "Email cannot be updated." });
       }
 
       if (typeof name !== "string" || !name.trim()) {
