@@ -1,5 +1,4 @@
 import { Sequelize } from "sequelize";
-import { User } from "../models/user.js";
 
 export const sequelize = new Sequelize({
   dialect: "mysql",
@@ -9,22 +8,6 @@ export const sequelize = new Sequelize({
   port: Number(process.env.DB_PORT),
   host: process.env.DB_HOST,
 });
-
-async function seedAdminUser() {
-  const adminEmail = process.env.ADMIN_EMAIL || "admin@coffee.com";
-  const exists = await User.findOne({ where: { email: adminEmail } });
-
-  if (!exists) {
-    await User.create({
-      name: "Administrador",
-      email: adminEmail,
-      password: process.env.ADMIN_PASSWORD || "admin123",
-      cpf: process.env.ADMIN_CPF || "00000000000",
-      role: "admin",
-    });
-    console.log(`Admin user created (${adminEmail})!`);
-  }
-}
 
 export async function connectToDb() {
   try {
@@ -37,5 +20,22 @@ export async function connectToDb() {
     await seedAdminUser();
   } catch (err) {
     console.error("Database connection/sync error:", err);
+  }
+}
+
+async function seedAdminUser() {
+  const { User } = await import("../models/user.js");
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@coffee.com";
+  const exists = await User.findOne({ where: { email: adminEmail } });
+
+  if (!exists) {
+    await User.create({
+      name: "Administrador",
+      email: adminEmail,
+      password: process.env.ADMIN_PASSWORD || "admin123456",
+      cpf: process.env.ADMIN_CPF || "00000000000",
+      role: "admin",
+    });
+    console.log(`Admin user created (${adminEmail})!`);
   }
 }
