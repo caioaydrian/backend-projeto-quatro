@@ -15,3 +15,4 @@
 [x] Skill para IA para tratar de segurança
 [] Adicionar swagger para documentação da API
 [] Middleware de erros global
+[] Remover alter true do sequelize.ts
