@@ -5,7 +5,7 @@ import { formatPaginatedResponse, getPagination } from "../utils/pagination.js";
 export class DrinkController {
   static async create(req: Request, res: Response) {
     try {
-      const { name, price, stock, categoryId } = req.body;
+      const { name, price, stock, categoryId, imageUrl } = req.body;
 
       if (!name || typeof name !== "string" || !name.trim()) {
         return res.status(400).json({ error: "Drink name is required." });
@@ -36,6 +36,7 @@ export class DrinkController {
         price: parsedPrice,
         stock: parsedStock,
         categoryId: parsedCategoryId,
+        imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
       });
 
       return res.status(201).json({
@@ -100,7 +101,7 @@ export class DrinkController {
         return res.status(404).json({ error: "Drink not found." });
       }
 
-      const { name, price, stock, categoryId } = req.body;
+      const { name, price, stock, categoryId, imageUrl } = req.body;
 
       if (name !== undefined) {
         if (typeof name !== "string" || !name.trim()) {
@@ -135,6 +136,10 @@ export class DrinkController {
           return res.status(404).json({ error: "Referenced category not found." });
         }
         drink.categoryId = parsedCategoryId;
+      }
+
+      if (imageUrl !== undefined) {
+        drink.imageUrl = typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null;
       }
 
       await drink.save();
