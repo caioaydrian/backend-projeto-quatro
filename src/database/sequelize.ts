@@ -30,9 +30,9 @@ async function seedAdminUser() {
 
   if (!exists) {
     await User.create({
-      name: "Administrador",
+      name: "Administrator",
       email: adminEmail,
-      password: process.env.ADMIN_PASSWORD || "admin123456",
+      password: process.env.ADMIN_PASSWORD || "admin123",
       cpf: process.env.ADMIN_CPF || "00000000000",
       role: "admin",
     });
