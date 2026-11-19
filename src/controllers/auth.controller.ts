@@ -2,7 +2,6 @@ import { type Request, type Response } from "express";
 import jwt from "jsonwebtoken";
 import { AppError } from "../errors/AppError.js";
 import { User } from "../models/user.js";
-import { UserController } from "./user.controller.js";
 
 interface RegisterBody {
   name?: string;
@@ -24,15 +23,15 @@ export class AuthController {
       throw new AppError("Fields name, email, password, and cpf are required.", 400);
     }
 
-    if (!UserController.validateEmail(email)) {
+    if (!User.validateEmail(email)) {
       throw new AppError("Invalid email format.", 400);
     }
 
-    if (!UserController.validateCPF(cpf)) {
+    if (!User.validateCPF(cpf)) {
       throw new AppError("Invalid CPF.", 400);
     }
 
-    const passwordValidation = UserController.validatePasswordLevel(password);
+    const passwordValidation = User.validatePasswordLevel(password);
     if (!passwordValidation.isValid) {
       throw new AppError(passwordValidation.message ?? "Invalid password.", 400);
     }
@@ -78,7 +77,7 @@ export class AuthController {
       throw new AppError("Fields email and password are required.", 400);
     }
 
-    if (!UserController.validateEmail(email)) {
+    if (!User.validateEmail(email)) {
       throw new AppError("Invalid email format.", 400);
     }
 

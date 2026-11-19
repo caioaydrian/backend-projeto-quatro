@@ -8,6 +8,7 @@ interface DrinkBody {
   price?: number | string;
   stock?: number | string;
   categoryId?: number | string;
+  imageUrl?: string | null;
 }
 
 export class DrinkController {

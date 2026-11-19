@@ -59,12 +59,7 @@ export class SaleController {
           throw new AppError(`Drink with ID ${drinkId} not found.`, 404);
         }
 
-        if (drink.stock < quantity) {
-          throw new AppError(
-            `Insufficient stock for '${drink.name}'. Available: ${drink.stock}, Requested: ${quantity}.`,
-            400
-          );
-        }
+        drink.decreaseStock(quantity);
 
         const unitPrice = Number(drink.price);
         calculatedTotal += unitPrice * quantity;
@@ -97,7 +92,6 @@ export class SaleController {
           { transaction }
         );
 
-        item.drinkInstance.stock -= item.quantity;
         await item.drinkInstance.save({ transaction });
       }
 
@@ -233,7 +227,7 @@ export class SaleController {
       for (const item of items) {
         const drink = await Drink.findByPk(item.drinkId, { transaction });
         if (drink) {
-          drink.stock += item.quantity;
+          drink.increaseStock(item.quantity);
           await drink.save({ transaction });
         }
         await item.destroy({ transaction });

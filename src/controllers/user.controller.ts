@@ -12,79 +12,7 @@ interface UserBody {
   role?: string;
 }
 
-interface PasswordValidationResult {
-  isValid: boolean;
-  level: "Weak" | "Medium" | "Strong";
-  message?: string;
-}
-
 export class UserController {
-  static validateEmail(email: string): boolean {
-    if (typeof email !== "string") return false;
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email.trim());
-  }
-
-  static validateCPF(cpf: string): boolean {
-    if (typeof cpf !== "string") return false;
-
-    // tudo que não é numero é tirado
-    const cleanCPF = cpf.replace(/\D/g, "");
-
-    if (cleanCPF.length !== 11) return false;
-
-    let sum = 0;
-    for (let i = 0; i < 9; i++) {
-      sum += parseInt(cleanCPF.charAt(i), 10) * (10 - i);
-    }
-    let firstRemainder = (sum * 10) % 11;
-    if (firstRemainder === 10 || firstRemainder === 11) firstRemainder = 0;
-    if (firstRemainder !== parseInt(cleanCPF.charAt(9), 10)) return false;
-
-    sum = 0;
-    for (let i = 0; i < 10; i++) {
-      sum += parseInt(cleanCPF.charAt(i), 10) * (11 - i);
-    }
-    let secondRemainder = (sum * 10) % 11;
-    if (secondRemainder === 10 || secondRemainder === 11) secondRemainder = 0;
-    if (secondRemainder !== parseInt(cleanCPF.charAt(10), 10)) return false;
-
-    return true;
-  }
-
-  static validatePasswordLevel(password: string): PasswordValidationResult {
-    if (typeof password !== "string" || password.length < 8) {
-      return {
-        isValid: false,
-        level: "Weak",
-        message: "Password must have at least 8 characters.",
-      };
-    }
-
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasNumber = /[0-9]/.test(password);
-    const hasSpecial = /[^A-Za-z0-9]/.test(password);
-
-    const criteriaCount = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
-
-    if (criteriaCount < 3) {
-      return {
-        isValid: false,
-        level: "Weak",
-        message:
-          "Password must meet at least 3 of the following criteria: uppercase letter, lowercase letter, number, or special character.",
-      };
-    }
-
-    const level = criteriaCount === 4 ? "Strong" : "Medium";
-
-    return {
-      isValid: true,
-      level,
-    };
-  }
-
   static async create(req: Request, res: Response) {
     const { name, email, password, cpf, role } = req.body as UserBody;
 
@@ -92,15 +20,15 @@ export class UserController {
       throw new AppError("Fields name, email, password, and cpf are required.", 400);
     }
 
-    if (!UserController.validateEmail(email)) {
+    if (!User.validateEmail(email)) {
       throw new AppError("Invalid email format.", 400);
     }
 
-    if (!UserController.validateCPF(cpf)) {
+    if (!User.validateCPF(cpf)) {
       throw new AppError("Invalid CPF.", 400);
     }
 
-    const passwordValidation = UserController.validatePasswordLevel(password);
+    const passwordValidation = User.validatePasswordLevel(password);
     if (!passwordValidation.isValid) {
       throw new AppError(passwordValidation.message ?? "Invalid password.", 400);
     }
@@ -191,7 +119,7 @@ export class UserController {
       throw new AppError("Fields name, email, cpf, and password are required.", 400);
     }
 
-    if (typeof email !== "string" || !UserController.validateEmail(email)) {
+    if (typeof email !== "string" || !User.validateEmail(email)) {
       throw new AppError("Invalid email format.", 400);
     }
 
@@ -203,7 +131,7 @@ export class UserController {
       throw new AppError("Name cannot be empty.", 400);
     }
 
-    if (!UserController.validateCPF(cpf)) {
+    if (!User.validateCPF(cpf)) {
       throw new AppError("Invalid CPF.", 400);
     }
 
@@ -218,7 +146,7 @@ export class UserController {
       throw new AppError("CPF is already registered for another user.", 409);
     }
 
-    const passwordValidation = UserController.validatePasswordLevel(password);
+    const passwordValidation = User.validatePasswordLevel(password);
     if (!passwordValidation.isValid) {
       throw new AppError(passwordValidation.message ?? "Invalid password.", 400);
     }
