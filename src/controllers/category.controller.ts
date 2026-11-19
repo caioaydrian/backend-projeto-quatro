@@ -1,128 +1,106 @@
 import { type Request, type Response } from "express";
+import { AppError } from "../errors/AppError.js";
 import { Category, Drink } from "../models/index.js";
 import { formatPaginatedResponse, getPagination } from "../utils/pagination.js";
 
+interface CategoryBody {
+  name?: string;
+}
+
 export class CategoryController {
   static async create(req: Request, res: Response) {
-    try {
-      const { name } = req.body;
+    const { name } = req.body as CategoryBody;
 
-      if (!name || typeof name !== "string" || !name.trim()) {
-        return res.status(400).json({ error: "Category name is required." });
-      }
-
-      const existingCategory = await Category.findOne({
-        where: { name: name.trim() },
-      });
-      if (existingCategory) {
-        return res.status(409).json({ error: "Category already exists." });
-      }
-
-      const category = await Category.create({ name: name.trim() });
-      return res.status(201).json({
-        message: "Category created successfully.",
-        category,
-      });
-    } catch (error) {
-      console.error("Error creating category:", error);
-      return res.status(500).json({ error: "Internal server error." });
+    if (!name || typeof name !== "string" || !name.trim()) {
+      throw new AppError("Category name is required.", 400);
     }
+
+    const existingCategory = await Category.findOne({
+      where: { name: name.trim() },
+    });
+    if (existingCategory) {
+      throw new AppError("Category already exists.", 409);
+    }
+
+    const category = await Category.create({ name: name.trim() });
+    return res.status(201).json({
+      message: "Category created successfully.",
+      category,
+    });
   }
 
   static async findAll(req: Request, res: Response) {
-    try {
-      const { page, limit, offset } = getPagination(req);
+    const { page, limit, offset } = getPagination(req);
 
-      const { count, rows } = await Category.findAndCountAll({
-        limit,
-        offset,
-        order: [["id", "ASC"]],
-      });
+    const { count, rows } = await Category.findAndCountAll({
+      limit,
+      offset,
+      order: [["id", "ASC"]],
+    });
 
-      return res.status(200).json(formatPaginatedResponse(rows, count, page, limit));
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      return res.status(500).json({ error: "Internal server error." });
-    }
+    return res.status(200).json(formatPaginatedResponse(rows, count, page, limit));
   }
 
   static async findById(req: Request, res: Response) {
-    try {
-      const id = Number(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid category ID." });
-      }
-
-      const category = await Category.findByPk(id, {
-        include: [{ model: Drink, as: "drinks" }],
-      });
-
-      if (!category) {
-        return res.status(404).json({ error: "Category not found." });
-      }
-
-      return res.status(200).json(category);
-    } catch (error) {
-      console.error("Error fetching category by ID:", error);
-      return res.status(500).json({ error: "Internal server error." });
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      throw new AppError("Invalid category ID.", 400);
     }
+
+    const category = await Category.findByPk(id, {
+      include: [{ model: Drink, as: "drinks" }],
+    });
+
+    if (!category) {
+      throw new AppError("Category not found.", 404);
+    }
+
+    return res.status(200).json(category);
   }
 
   static async update(req: Request, res: Response) {
-    try {
-      const id = Number(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid category ID." });
-      }
-
-      const category = await Category.findByPk(id);
-      if (!category) {
-        return res.status(404).json({ error: "Category not found." });
-      }
-
-      const { name } = req.body;
-      if (!name || typeof name !== "string" || !name.trim()) {
-        return res.status(400).json({ error: "Category name is required." });
-      }
-
-      category.name = name.trim();
-      await category.save();
-
-      return res.status(200).json({
-        message: "Category updated successfully.",
-        category,
-      });
-    } catch (error) {
-      console.error("Error updating category:", error);
-      return res.status(500).json({ error: "Internal server error." });
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      throw new AppError("Invalid category ID.", 400);
     }
+
+    const category = await Category.findByPk(id);
+    if (!category) {
+      throw new AppError("Category not found.", 404);
+    }
+
+    const { name } = req.body as CategoryBody;
+    if (!name || typeof name !== "string" || !name.trim()) {
+      throw new AppError("Category name is required.", 400);
+    }
+
+    category.name = name.trim();
+    await category.save();
+
+    return res.status(200).json({
+      message: "Category updated successfully.",
+      category,
+    });
   }
 
   static async delete(req: Request, res: Response) {
-    try {
-      const id = Number(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid category ID." });
-      }
-
-      const category = await Category.findByPk(id);
-      if (!category) {
-        return res.status(404).json({ error: "Category not found." });
-      }
-
-      const drinksCount = await Drink.count({ where: { categoryId: id } });
-      if (drinksCount > 0) {
-        return res.status(400).json({
-          error: "Cannot delete category because it has associated drinks.",
-        });
-      }
-
-      await category.destroy();
-      return res.status(200).json({ message: "Category deleted successfully." });
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      return res.status(500).json({ error: "Internal server error." });
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      throw new AppError("Invalid category ID.", 400);
     }
+
+    const category = await Category.findByPk(id);
+    if (!category) {
+      throw new AppError("Category not found.", 404);
+    }
+
+    const drinksCount = await Drink.count({ where: { categoryId: id } });
+    if (drinksCount > 0) {
+      throw new AppError("Cannot delete category because it has associated drinks.", 400);
+    }
+
+    await category.destroy();
+    return res.status(200).json({ message: "Category deleted successfully." });
   }
 }
 

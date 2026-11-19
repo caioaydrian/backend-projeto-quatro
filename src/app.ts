@@ -1,6 +1,6 @@
 import "dotenv/config";
 import cors from "cors";
-import express, { type Express, type Request, type Response } from "express";
+import express, { type Express } from "express";
 import { connectToDb } from "./database/sequelize.js";
 import "./models/index.js";
 import { authRoutes } from "./routes/auth.routes.js";
@@ -9,6 +9,7 @@ import { categoryRoutes } from "./routes/category.routes.js";
 import { drinkRoutes } from "./routes/drink.routes.js";
 import { saleRoutes } from "./routes/sale.routes.js";
 import { reviewRoutes } from "./routes/review.routes.js";
+import { errorMiddleware } from "./middlewares/error.middleware.js";
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
@@ -33,9 +34,7 @@ app.use("/drinks", drinkRoutes);
 app.use("/sales", saleRoutes);
 app.use("/reviews", reviewRoutes);
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello World!");
-});
+app.use(errorMiddleware);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

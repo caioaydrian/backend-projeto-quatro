@@ -1,179 +1,160 @@
 import { type Request, type Response } from "express";
+import { AppError } from "../errors/AppError.js";
 import { Category, Drink, SaleItem } from "../models/index.js";
 import { formatPaginatedResponse, getPagination } from "../utils/pagination.js";
 
+interface DrinkBody {
+  name?: string;
+  price?: number | string;
+  stock?: number | string;
+  categoryId?: number | string;
+}
+
 export class DrinkController {
   static async create(req: Request, res: Response) {
-    try {
-      const { name, price, stock, categoryId } = req.body;
+    const { name, price, stock, categoryId } = req.body as DrinkBody;
 
-      if (!name || typeof name !== "string" || !name.trim()) {
-        return res.status(400).json({ error: "Drink name is required." });
-      }
-
-      const parsedPrice = Number(price);
-      if (isNaN(parsedPrice) || parsedPrice < 0) {
-        return res.status(400).json({ error: "Price must be a valid non-negative number." });
-      }
-
-      const parsedStock = Number(stock);
-      if (isNaN(parsedStock) || parsedStock < 0 || !Number.isInteger(parsedStock)) {
-        return res.status(400).json({ error: "Stock must be a valid non-negative integer." });
-      }
-
-      const parsedCategoryId = Number(categoryId);
-      if (isNaN(parsedCategoryId)) {
-        return res.status(400).json({ error: "Valid categoryId is required." });
-      }
-
-      const category = await Category.findByPk(parsedCategoryId);
-      if (!category) {
-        return res.status(404).json({ error: "Referenced category not found." });
-      }
-
-      const drink = await Drink.create({
-        name: name.trim(),
-        price: parsedPrice,
-        stock: parsedStock,
-        categoryId: parsedCategoryId,
-      });
-
-      return res.status(201).json({
-        message: "Drink created successfully.",
-        drink,
-      });
-    } catch (error) {
-      console.error("Error creating drink:", error);
-      return res.status(500).json({ error: "Internal server error." });
+    if (!name || typeof name !== "string" || !name.trim()) {
+      throw new AppError("Drink name is required.", 400);
     }
+
+    const parsedPrice = Number(price);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      throw new AppError("Price must be a valid non-negative number.", 400);
+    }
+
+    const parsedStock = Number(stock);
+    if (isNaN(parsedStock) || parsedStock < 0 || !Number.isInteger(parsedStock)) {
+      throw new AppError("Stock must be a valid non-negative integer.", 400);
+    }
+
+    const parsedCategoryId = Number(categoryId);
+    if (isNaN(parsedCategoryId)) {
+      throw new AppError("Valid categoryId is required.", 400);
+    }
+
+    const category = await Category.findByPk(parsedCategoryId);
+    if (!category) {
+      throw new AppError("Referenced category not found.", 404);
+    }
+
+    const drink = await Drink.create({
+      name: name.trim(),
+      price: parsedPrice,
+      stock: parsedStock,
+      categoryId: parsedCategoryId,
+    });
+
+    return res.status(201).json({
+      message: "Drink created successfully.",
+      drink,
+    });
   }
 
   static async findAll(req: Request, res: Response) {
-    try {
-      const { page, limit, offset } = getPagination(req);
+    const { page, limit, offset } = getPagination(req);
 
-      const { count, rows } = await Drink.findAndCountAll({
-        limit,
-        offset,
-        include: [{ model: Category, as: "category", attributes: ["id", "name"] }],
-        order: [["id", "ASC"]],
-      });
+    const { count, rows } = await Drink.findAndCountAll({
+      limit,
+      offset,
+      include: [{ model: Category, as: "category", attributes: ["id", "name"] }],
+      order: [["id", "ASC"]],
+    });
 
-      return res.status(200).json(formatPaginatedResponse(rows, count, page, limit));
-    } catch (error) {
-      console.error("Error fetching drinks:", error);
-      return res.status(500).json({ error: "Internal server error." });
-    }
+    return res.status(200).json(formatPaginatedResponse(rows, count, page, limit));
   }
 
   static async findById(req: Request, res: Response) {
-    try {
-      const id = Number(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid drink ID." });
-      }
-
-      const drink = await Drink.findByPk(id, {
-        include: [{ model: Category, as: "category", attributes: ["id", "name"] }],
-      });
-
-      if (!drink) {
-        return res.status(404).json({ error: "Drink not found." });
-      }
-
-      return res.status(200).json(drink);
-    } catch (error) {
-      console.error("Error fetching drink by ID:", error);
-      return res.status(500).json({ error: "Internal server error." });
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      throw new AppError("Invalid drink ID.", 400);
     }
+
+    const drink = await Drink.findByPk(id, {
+      include: [{ model: Category, as: "category", attributes: ["id", "name"] }],
+    });
+
+    if (!drink) {
+      throw new AppError("Drink not found.", 404);
+    }
+
+    return res.status(200).json(drink);
   }
 
   static async update(req: Request, res: Response) {
-    try {
-      const id = Number(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid drink ID." });
-      }
-
-      const drink = await Drink.findByPk(id);
-      if (!drink) {
-        return res.status(404).json({ error: "Drink not found." });
-      }
-
-      const { name, price, stock, categoryId } = req.body;
-
-      if (name !== undefined) {
-        if (typeof name !== "string" || !name.trim()) {
-          return res.status(400).json({ error: "Name cannot be empty." });
-        }
-        drink.name = name.trim();
-      }
-
-      if (price !== undefined) {
-        const parsedPrice = Number(price);
-        if (isNaN(parsedPrice) || parsedPrice < 0) {
-          return res.status(400).json({ error: "Price must be a valid non-negative number." });
-        }
-        drink.price = parsedPrice;
-      }
-
-      if (stock !== undefined) {
-        const parsedStock = Number(stock);
-        if (isNaN(parsedStock) || parsedStock < 0 || !Number.isInteger(parsedStock)) {
-          return res.status(400).json({ error: "Stock must be a valid non-negative integer." });
-        }
-        drink.stock = parsedStock;
-      }
-
-      if (categoryId !== undefined) {
-        const parsedCategoryId = Number(categoryId);
-        if (isNaN(parsedCategoryId)) {
-          return res.status(400).json({ error: "Invalid categoryId." });
-        }
-        const category = await Category.findByPk(parsedCategoryId);
-        if (!category) {
-          return res.status(404).json({ error: "Referenced category not found." });
-        }
-        drink.categoryId = parsedCategoryId;
-      }
-
-      await drink.save();
-
-      return res.status(200).json({
-        message: "Drink updated successfully.",
-        drink,
-      });
-    } catch (error) {
-      console.error("Error updating drink:", error);
-      return res.status(500).json({ error: "Internal server error." });
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      throw new AppError("Invalid drink ID.", 400);
     }
+
+    const drink = await Drink.findByPk(id);
+    if (!drink) {
+      throw new AppError("Drink not found.", 404);
+    }
+
+    const { name, price, stock, categoryId } = req.body as DrinkBody;
+
+    if (name !== undefined) {
+      if (typeof name !== "string" || !name.trim()) {
+        throw new AppError("Name cannot be empty.", 400);
+      }
+      drink.name = name.trim();
+    }
+
+    if (price !== undefined) {
+      const parsedPrice = Number(price);
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        throw new AppError("Price must be a valid non-negative number.", 400);
+      }
+      drink.price = parsedPrice;
+    }
+
+    if (stock !== undefined) {
+      const parsedStock = Number(stock);
+      if (isNaN(parsedStock) || parsedStock < 0 || !Number.isInteger(parsedStock)) {
+        throw new AppError("Stock must be a valid non-negative integer.", 400);
+      }
+      drink.stock = parsedStock;
+    }
+
+    if (categoryId !== undefined) {
+      const parsedCategoryId = Number(categoryId);
+      if (isNaN(parsedCategoryId)) {
+        throw new AppError("Invalid categoryId.", 400);
+      }
+      const category = await Category.findByPk(parsedCategoryId);
+      if (!category) {
+        throw new AppError("Referenced category not found.", 404);
+      }
+      drink.categoryId = parsedCategoryId;
+    }
+
+    await drink.save();
+
+    return res.status(200).json({
+      message: "Drink updated successfully.",
+      drink,
+    });
   }
 
   static async delete(req: Request, res: Response) {
-    try {
-      const id = Number(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid drink ID." });
-      }
-
-      const drink = await Drink.findByPk(id);
-      if (!drink) {
-        return res.status(404).json({ error: "Drink not found." });
-      }
-
-      const salesCount = await SaleItem.count({ where: { drinkId: id } });
-      if (salesCount > 0) {
-        return res.status(400).json({
-          error: "Cannot delete drink because it is associated with existing sales.",
-        });
-      }
-
-      await drink.destroy();
-      return res.status(200).json({ message: "Drink deleted successfully." });
-    } catch (error) {
-      console.error("Error deleting drink:", error);
-      return res.status(500).json({ error: "Internal server error." });
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      throw new AppError("Invalid drink ID.", 400);
     }
+
+    const drink = await Drink.findByPk(id);
+    if (!drink) {
+      throw new AppError("Drink not found.", 404);
+    }
+
+    const salesCount = await SaleItem.count({ where: { drinkId: id } });
+    if (salesCount > 0) {
+      throw new AppError("Cannot delete drink because it is associated with existing sales.", 400);
+    }
+
+    await drink.destroy();
+    return res.status(200).json({ message: "Drink deleted successfully." });
   }
 }
 

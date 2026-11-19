@@ -1,5 +1,6 @@
 import { type Request, type Response } from "express";
 import { sequelize } from "../database/sequelize.js";
+import { AppError } from "../errors/AppError.js";
 import { Drink, Sale, SaleItem, User } from "../models/index.js";
 import { formatPaginatedResponse, getPagination } from "../utils/pagination.js";
 
@@ -8,23 +9,30 @@ interface IncomingItem {
   quantity: number;
 }
 
+interface CreateSaleBody {
+  items?: IncomingItem[];
+}
+
+interface UpdateSaleBody {
+  status?: string;
+}
+
+type SaleWithItems = Sale & { items?: SaleItem[] };
+
 export class SaleController {
   static async create(req: Request, res: Response) {
     const transaction = await sequelize.transaction();
+    let committed = false;
     try {
       const userId = req.user?.id;
       if (!userId) {
-        await transaction.rollback();
-        return res.status(401).json({ error: "Unauthorized user." });
+        throw new AppError("Unauthorized user.", 401);
       }
 
-      const { items } = req.body as { items: IncomingItem[] };
+      const { items } = req.body as CreateSaleBody;
 
       if (!Array.isArray(items) || items.length === 0) {
-        await transaction.rollback();
-        return res
-          .status(400)
-          .json({ error: "Sale must contain an array with at least one item." });
+        throw new AppError("Sale must contain an array with at least one item.", 400);
       }
 
       let calculatedTotal = 0;
@@ -40,23 +48,22 @@ export class SaleController {
         const quantity = Number(item.quantity);
 
         if (isNaN(drinkId) || isNaN(quantity) || quantity <= 0 || !Number.isInteger(quantity)) {
-          await transaction.rollback();
-          return res.status(400).json({
-            error: "Each item must have a valid drinkId and a positive integer quantity.",
-          });
+          throw new AppError(
+            "Each item must have a valid drinkId and a positive integer quantity.",
+            400
+          );
         }
 
         const drink = await Drink.findByPk(drinkId, { transaction });
         if (!drink) {
-          await transaction.rollback();
-          return res.status(404).json({ error: `Drink with ID ${drinkId} not found.` });
+          throw new AppError(`Drink with ID ${drinkId} not found.`, 404);
         }
 
         if (drink.stock < quantity) {
-          await transaction.rollback();
-          return res.status(400).json({
-            error: `Insufficient stock for '${drink.name}'. Available: ${drink.stock}, Requested: ${quantity}.`,
-          });
+          throw new AppError(
+            `Insufficient stock for '${drink.name}'. Available: ${drink.stock}, Requested: ${quantity}.`,
+            400
+          );
         }
 
         const unitPrice = Number(drink.price);
@@ -95,6 +102,7 @@ export class SaleController {
       }
 
       await transaction.commit();
+      committed = true;
 
       const createdSale = await Sale.findByPk(sale.id, {
         include: [
@@ -111,151 +119,136 @@ export class SaleController {
         sale: createdSale,
       });
     } catch (error) {
-      await transaction.rollback();
-      console.error("Error creating sale:", error);
-      return res.status(500).json({ error: "Internal server error." });
+      if (!committed) {
+        await transaction.rollback();
+      }
+      throw error;
     }
   }
 
   static async findAll(req: Request, res: Response) {
-    try {
-      const { page, limit, offset } = getPagination(req);
-      const isClient = req.user?.role === "client";
+    const { page, limit, offset } = getPagination(req);
+    const isClient = req.user?.role === "client";
 
-      const whereCondition = isClient ? { userId: req.user?.id } : {};
+    const whereCondition = isClient ? { userId: req.user?.id } : {};
 
-      const { count, rows } = await Sale.findAndCountAll({
-        where: whereCondition,
-        limit,
-        offset,
-        include: [
-          {
-            model: User,
-            as: "user",
-            attributes: ["id", "name", "email"],
-          },
-          {
-            model: SaleItem,
-            as: "items",
-            include: [{ model: Drink, as: "drink", attributes: ["id", "name", "price"] }],
-          },
-        ],
-        order: [["id", "DESC"]],
-      });
+    const { count, rows } = await Sale.findAndCountAll({
+      where: whereCondition,
+      limit,
+      offset,
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "name", "email"],
+        },
+        {
+          model: SaleItem,
+          as: "items",
+          include: [{ model: Drink, as: "drink", attributes: ["id", "name", "price"] }],
+        },
+      ],
+      order: [["id", "DESC"]],
+    });
 
-      return res.status(200).json(formatPaginatedResponse(rows, count, page, limit));
-    } catch (error) {
-      console.error("Error fetching sales:", error);
-      return res.status(500).json({ error: "Internal server error." });
-    }
+    return res.status(200).json(formatPaginatedResponse(rows, count, page, limit));
   }
 
   static async findById(req: Request, res: Response) {
-    try {
-      const id = Number(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid sale ID." });
-      }
-
-      const sale = await Sale.findByPk(id, {
-        include: [
-          {
-            model: User,
-            as: "user",
-            attributes: ["id", "name", "email"],
-          },
-          {
-            model: SaleItem,
-            as: "items",
-            include: [{ model: Drink, as: "drink" }],
-          },
-        ],
-      });
-
-      if (!sale) {
-        return res.status(404).json({ error: "Sale not found." });
-      }
-
-      if (req.user?.role === "client" && sale.userId !== req.user.id) {
-        return res.status(403).json({ error: "Access denied to this sale." });
-      }
-
-      return res.status(200).json(sale);
-    } catch (error) {
-      console.error("Error fetching sale by ID:", error);
-      return res.status(500).json({ error: "Internal server error." });
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      throw new AppError("Invalid sale ID.", 400);
     }
+
+    const sale = await Sale.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["id", "name", "email"],
+        },
+        {
+          model: SaleItem,
+          as: "items",
+          include: [{ model: Drink, as: "drink" }],
+        },
+      ],
+    });
+
+    if (!sale) {
+      throw new AppError("Sale not found.", 404);
+    }
+
+    if (req.user?.role === "client" && sale.userId !== req.user.id) {
+      throw new AppError("Access denied to this sale.", 403);
+    }
+
+    return res.status(200).json(sale);
   }
 
   static async update(req: Request, res: Response) {
-    try {
-      const id = Number(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid sale ID." });
-      }
-
-      const sale = await Sale.findByPk(id);
-      if (!sale) {
-        return res.status(404).json({ error: "Sale not found." });
-      }
-
-      const { status } = req.body;
-      if (!status || typeof status !== "string" || !status.trim()) {
-        return res.status(400).json({ error: "Valid status is required." });
-      }
-
-      sale.status = status.trim();
-      await sale.save();
-
-      return res.status(200).json({
-        message: "Sale updated successfully.",
-        sale,
-      });
-    } catch (error) {
-      console.error("Error updating sale:", error);
-      return res.status(500).json({ error: "Internal server error." });
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      throw new AppError("Invalid sale ID.", 400);
     }
+
+    const sale = await Sale.findByPk(id);
+    if (!sale) {
+      throw new AppError("Sale not found.", 404);
+    }
+
+    const { status } = req.body as UpdateSaleBody;
+    if (!status || typeof status !== "string" || !status.trim()) {
+      throw new AppError("Valid status is required.", 400);
+    }
+
+    sale.status = status.trim();
+    await sale.save();
+
+    return res.status(200).json({
+      message: "Sale updated successfully.",
+      sale,
+    });
   }
 
   static async delete(req: Request, res: Response) {
     const transaction = await sequelize.transaction();
+    let committed = false;
     try {
       const id = Number(req.params.id);
       if (isNaN(id)) {
-        await transaction.rollback();
-        return res.status(400).json({ error: "Invalid sale ID." });
+        throw new AppError("Invalid sale ID.", 400);
       }
 
-      const sale = await Sale.findByPk(id, {
+      const sale = (await Sale.findByPk(id, {
         include: [{ model: SaleItem, as: "items" }],
         transaction,
-      });
+      })) as SaleWithItems | null;
 
       if (!sale) {
-        await transaction.rollback();
-        return res.status(404).json({ error: "Sale not found." });
+        throw new AppError("Sale not found.", 404);
       }
 
-      const items = (sale as any).items as SaleItem[];
-      if (items && items.length > 0) {
-        for (const item of items) {
-          const drink = await Drink.findByPk(item.drinkId, { transaction });
-          if (drink) {
-            drink.stock += item.quantity;
-            await drink.save({ transaction });
-          }
-          await item.destroy({ transaction });
+      const items = sale.items ?? [];
+      for (const item of items) {
+        const drink = await Drink.findByPk(item.drinkId, { transaction });
+        if (drink) {
+          drink.stock += item.quantity;
+          await drink.save({ transaction });
         }
+        await item.destroy({ transaction });
       }
 
       await sale.destroy({ transaction });
       await transaction.commit();
+      committed = true;
 
       return res.status(200).json({ message: "Sale deleted and stock restored successfully." });
     } catch (error) {
-      await transaction.rollback();
-      console.error("Error deleting sale:", error);
-      return res.status(500).json({ error: "Internal server error." });
+      if (!committed) {
+        await transaction.rollback();
+      }
+      throw error;
     }
   }
 }
