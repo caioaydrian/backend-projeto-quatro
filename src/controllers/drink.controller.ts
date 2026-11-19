@@ -1,7 +1,8 @@
 import { type Request, type Response } from "express";
 import { AppError } from "../errors/AppError.js";
-import { Category, Drink, SaleItem } from "../models/index.js";
+import { Category, Drink } from "../models/index.js";
 import { formatPaginatedResponse, getPagination } from "../utils/pagination.js";
+import { DrinkService } from "../services/drink.service.js";
 
 interface DrinkBody {
   name?: string;
@@ -13,39 +14,10 @@ interface DrinkBody {
 
 export class DrinkController {
   static async create(req: Request, res: Response) {
-    const { name, price, stock, categoryId, imageUrl } = req.body as DrinkBody;
+    const data = DrinkService.parseCreateData(req.body as DrinkBody);
+    await DrinkService.validateCategory(data.categoryId);
 
-    if (!name || typeof name !== "string" || !name.trim()) {
-      throw new AppError("Drink name is required.", 400);
-    }
-
-    const parsedPrice = Number(price);
-    if (isNaN(parsedPrice) || parsedPrice < 0) {
-      throw new AppError("Price must be a valid non-negative number.", 400);
-    }
-
-    const parsedStock = Number(stock);
-    if (isNaN(parsedStock) || parsedStock < 0 || !Number.isInteger(parsedStock)) {
-      throw new AppError("Stock must be a valid non-negative integer.", 400);
-    }
-
-    const parsedCategoryId = Number(categoryId);
-    if (isNaN(parsedCategoryId)) {
-      throw new AppError("Valid categoryId is required.", 400);
-    }
-
-    const category = await Category.findByPk(parsedCategoryId);
-    if (!category) {
-      throw new AppError("Referenced category not found.", 404);
-    }
-
-    const drink = await Drink.create({
-      name: name.trim(),
-      price: parsedPrice,
-      stock: parsedStock,
-      categoryId: parsedCategoryId,
-      imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
-    });
+    const drink = await Drink.create(data);
 
     return res.status(201).json({
       message: "Drink created successfully.",
@@ -94,47 +66,7 @@ export class DrinkController {
       throw new AppError("Drink not found.", 404);
     }
 
-    const { name, price, stock, categoryId, imageUrl } = req.body as DrinkBody;
-
-    if (name !== undefined) {
-      if (typeof name !== "string" || !name.trim()) {
-        throw new AppError("Name cannot be empty.", 400);
-      }
-      drink.name = name.trim();
-    }
-
-    if (price !== undefined) {
-      const parsedPrice = Number(price);
-      if (isNaN(parsedPrice) || parsedPrice < 0) {
-        throw new AppError("Price must be a valid non-negative number.", 400);
-      }
-      drink.price = parsedPrice;
-    }
-
-    if (stock !== undefined) {
-      const parsedStock = Number(stock);
-      if (isNaN(parsedStock) || parsedStock < 0 || !Number.isInteger(parsedStock)) {
-        throw new AppError("Stock must be a valid non-negative integer.", 400);
-      }
-      drink.stock = parsedStock;
-    }
-
-    if (categoryId !== undefined) {
-      const parsedCategoryId = Number(categoryId);
-      if (isNaN(parsedCategoryId)) {
-        throw new AppError("Invalid categoryId.", 400);
-      }
-      const category = await Category.findByPk(parsedCategoryId);
-      if (!category) {
-        throw new AppError("Referenced category not found.", 404);
-      }
-      drink.categoryId = parsedCategoryId;
-    }
-
-    if (imageUrl !== undefined) {
-      drink.imageUrl = typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null;
-    }
-
+    await DrinkService.applyUpdateData(drink, req.body as DrinkBody);
     await drink.save();
 
     return res.status(200).json({
@@ -154,12 +86,9 @@ export class DrinkController {
       throw new AppError("Drink not found.", 404);
     }
 
-    const salesCount = await SaleItem.count({ where: { drinkId: id } });
-    if (salesCount > 0) {
-      throw new AppError("Cannot delete drink because it is associated with existing sales.", 400);
-    }
-
+    await DrinkService.ensureCanDelete(id);
     await drink.destroy();
+
     return res.status(200).json({ message: "Drink deleted successfully." });
   }
 }
