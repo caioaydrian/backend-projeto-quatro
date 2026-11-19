@@ -4,11 +4,12 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const drinkRoutes = Router();
 
+drinkRoutes.get("/", DrinkController.findAll);
+drinkRoutes.get("/:id", DrinkController.findById);
+
 drinkRoutes.use(authMiddleware);
 
 drinkRoutes.post("/", DrinkController.create);
-drinkRoutes.get("/", DrinkController.findAll);
-drinkRoutes.get("/:id", DrinkController.findById);
 drinkRoutes.put("/:id", DrinkController.update);
 drinkRoutes.delete("/:id", DrinkController.delete);
 

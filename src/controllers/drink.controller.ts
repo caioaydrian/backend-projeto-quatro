@@ -12,7 +12,7 @@ interface DrinkBody {
 
 export class DrinkController {
   static async create(req: Request, res: Response) {
-    const { name, price, stock, categoryId } = req.body as DrinkBody;
+    const { name, price, stock, categoryId, imageUrl } = req.body as DrinkBody;
 
     if (!name || typeof name !== "string" || !name.trim()) {
       throw new AppError("Drink name is required.", 400);
@@ -43,6 +43,7 @@ export class DrinkController {
       price: parsedPrice,
       stock: parsedStock,
       categoryId: parsedCategoryId,
+      imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
     });
 
     return res.status(201).json({
@@ -92,7 +93,7 @@ export class DrinkController {
       throw new AppError("Drink not found.", 404);
     }
 
-    const { name, price, stock, categoryId } = req.body as DrinkBody;
+    const { name, price, stock, categoryId, imageUrl } = req.body as DrinkBody;
 
     if (name !== undefined) {
       if (typeof name !== "string" || !name.trim()) {
@@ -127,6 +128,10 @@ export class DrinkController {
         throw new AppError("Referenced category not found.", 404);
       }
       drink.categoryId = parsedCategoryId;
+    }
+
+    if (imageUrl !== undefined) {
+      drink.imageUrl = typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null;
     }
 
     await drink.save();

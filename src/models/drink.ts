@@ -8,6 +8,7 @@ export class Drink extends Model {
   declare price: number;
   declare stock: number;
   declare categoryId: ForeignKey<Category["id"]>;
+  declare imageUrl: string | null;
 }
 
 Drink.init(
@@ -32,6 +33,10 @@ Drink.init(
         model: Category,
         key: "id",
       },
+    },
+    imageUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {
