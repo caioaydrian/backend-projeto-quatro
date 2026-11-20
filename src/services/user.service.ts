@@ -1,5 +1,5 @@
 import { Op } from "sequelize";
-import { AppError } from "../errors/AppError.js";
+import { BadRequestError, ConflictError, NotFoundError } from "../errors/AppError.js";
 import { Sale, User } from "../models/index.js";
 
 interface UserInput {
@@ -20,41 +20,36 @@ export class UserService {
   static validateRequiredForCreate(body: UserInput): void {
     const { name, email, password, cpf } = body;
     if (!name || !email || !password || !cpf) {
-      throw new AppError("Fields name, email, password, and cpf are required.", 400);
+      throw new BadRequestError("Fields name, email, password, and cpf are required.");
     }
   }
 
   static validateCredentialsData(email: string, cpf: string, password: string): void {
     if (!User.validateEmail(email)) {
-      throw new AppError("Invalid email format.", 400);
+      throw new BadRequestError("Invalid email format.");
     }
     if (!User.validateCPF(cpf)) {
-      throw new AppError("Invalid CPF.", 400);
+      throw new BadRequestError("Invalid CPF.");
     }
     const passwordValidation = User.validatePasswordLevel(password);
     if (!passwordValidation.isValid) {
-      throw new AppError(passwordValidation.message ?? "Invalid password.", 400);
+      throw new BadRequestError(passwordValidation.message ?? "Invalid password.");
     }
   }
 
   static async ensureEmailAvailable(email: string): Promise<void> {
     const existingEmail = await User.findOne({ where: { email } });
     if (existingEmail) {
-      throw new AppError("Email is already registered.", 409);
+      throw new ConflictError("Email is already registered.");
     }
   }
 
   static async ensureCpfAvailable(cpf: string, ignoreUserId?: number): Promise<void> {
-    const where = ignoreUserId
-      ? { cpf, id: { [Op.ne]: ignoreUserId } }
-      : { cpf };
+    const where = ignoreUserId ? { cpf, id: { [Op.ne]: ignoreUserId } } : { cpf };
     const existingCPF = await User.findOne({ where });
     if (existingCPF) {
-      throw new AppError(
-        ignoreUserId
-          ? "CPF is already registered for another user."
-          : "CPF is already registered.",
-        409
+      throw new ConflictError(
+        ignoreUserId ? "CPF is already registered for another user." : "CPF is already registered."
       );
     }
   }
@@ -85,28 +80,28 @@ export class UserService {
     const { name, email, password, cpf, role } = body;
 
     if (!name || !email || !cpf || !password) {
-      throw new AppError("Fields name, email, cpf, and password are required.", 400);
+      throw new BadRequestError("Fields name, email, cpf, and password are required.");
     }
 
     if (typeof email !== "string" || !User.validateEmail(email)) {
-      throw new AppError("Invalid email format.", 400);
+      throw new BadRequestError("Invalid email format.");
     }
 
     if (typeof name !== "string" || !name.trim()) {
-      throw new AppError("Name cannot be empty.", 400);
+      throw new BadRequestError("Name cannot be empty.");
     }
 
     if (!User.validateCPF(cpf)) {
-      throw new AppError("Invalid CPF.", 400);
+      throw new BadRequestError("Invalid CPF.");
     }
 
     const user = await User.findByPk(id);
     if (!user) {
-      throw new AppError("User not found.", 404);
+      throw new NotFoundError("User not found.");
     }
 
     if (email.trim().toLowerCase() !== user.email) {
-      throw new AppError("Email cannot be updated.", 400);
+      throw new BadRequestError("Email cannot be updated.");
     }
 
     const cleanCPF = cpf.replace(/\D/g, "");
@@ -114,7 +109,7 @@ export class UserService {
 
     const passwordValidation = User.validatePasswordLevel(password);
     if (!passwordValidation.isValid) {
-      throw new AppError(passwordValidation.message ?? "Invalid password.", 400);
+      throw new BadRequestError(passwordValidation.message ?? "Invalid password.");
     }
 
     user.name = name.trim();
@@ -132,12 +127,12 @@ export class UserService {
   static async deleteUser(id: number): Promise<void> {
     const user = await User.findByPk(id);
     if (!user) {
-      throw new AppError("User not found.", 404);
+      throw new NotFoundError("User not found.");
     }
 
     const salesCount = await Sale.count({ where: { userId: id } });
     if (salesCount > 0) {
-      throw new AppError("Cannot delete user because they have associated sales.", 400);
+      throw new BadRequestError("Cannot delete user because they have associated sales.");
     }
 
     await user.destroy();

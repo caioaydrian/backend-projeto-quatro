@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { AppError } from "../errors/AppError.js";
+import { BadRequestError, UnauthorizedError } from "../errors/AppError.js";
 import { User } from "../models/index.js";
 import { UserService } from "./user.service.js";
 
@@ -30,11 +30,11 @@ export class AuthService {
     const { email, password } = body;
 
     if (!email || !password || typeof email !== "string" || typeof password !== "string") {
-      throw new AppError("Fields email and password are required.", 400);
+      throw new BadRequestError("Fields email and password are required.");
     }
 
     if (!User.validateEmail(email)) {
-      throw new AppError("Invalid email format.", 400);
+      throw new BadRequestError("Invalid email format.");
     }
 
     const normalizedEmail = email.trim().toLowerCase();
@@ -42,7 +42,7 @@ export class AuthService {
     const isPasswordValid = user ? await user.checkPassword(password) : false;
 
     if (!user || !isPasswordValid) {
-      throw new AppError("Invalid email or password.", 401);
+      throw new UnauthorizedError("Invalid email or password.");
     }
 
     const secret = process.env.JWT_SECRET || "default_jwt_secret_key";

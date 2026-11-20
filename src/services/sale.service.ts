@@ -1,6 +1,6 @@
 import type { Transaction } from "sequelize";
 import { sequelize } from "../database/sequelize.js";
-import { AppError } from "../errors/AppError.js";
+import { BadRequestError, NotFoundError } from "../errors/AppError.js";
 import { Drink, Sale, SaleItem } from "../models/index.js";
 
 interface IncomingItem {
@@ -31,15 +31,14 @@ export class SaleService {
       const quantity = Number(item.quantity);
 
       if (isNaN(drinkId) || isNaN(quantity) || quantity <= 0 || !Number.isInteger(quantity)) {
-        throw new AppError(
-          "Each item must have a valid drinkId and a positive integer quantity.",
-          400
+        throw new BadRequestError(
+          "Each item must have a valid drinkId and a positive integer quantity."
         );
       }
 
       const drink = await Drink.findByPk(drinkId, { transaction });
       if (!drink) {
-        throw new AppError(`Drink with ID ${drinkId} not found.`, 404);
+        throw new NotFoundError(`Drink with ID ${drinkId} not found.`);
       }
 
       drink.decreaseStock(quantity);
@@ -61,7 +60,7 @@ export class SaleService {
   static async createSale(userId: number, body: CreateSaleBody) {
     const { items } = body;
     if (!Array.isArray(items) || items.length === 0) {
-      throw new AppError("Sale must contain an array with at least one item.", 400);
+      throw new BadRequestError("Sale must contain an array with at least one item.");
     }
 
     const transaction = await sequelize.transaction();
@@ -122,7 +121,7 @@ export class SaleService {
       })) as SaleWithItems | null;
 
       if (!sale) {
-        throw new AppError("Sale not found.", 404);
+        throw new NotFoundError("Sale not found.");
       }
 
       const items = sale.items ?? [];

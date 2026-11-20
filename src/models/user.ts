@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { DataTypes, Model } from "sequelize";
-import { AppError } from "../errors/AppError.js";
+import { BadRequestError } from "../errors/AppError.js";
 import { sequelize } from "../database/sequelize.js";
 
 export interface PasswordValidationResult {
@@ -97,7 +97,7 @@ export class User extends Model {
   public setPassword(password: string) {
     const validation = User.validatePasswordLevel(password);
     if (!validation.isValid) {
-      throw new AppError(validation.message ?? "Invalid password.", 400);
+      throw new BadRequestError(validation.message ?? "Invalid password.");
     }
     this.setDataValue("password", password);
   }

@@ -1,5 +1,5 @@
 import { type Request, type Response } from "express";
-import { AppError } from "../errors/AppError.js";
+import { BadRequestError, NotFoundError } from "../errors/AppError.js";
 import { Category, Drink } from "../models/index.js";
 import { formatPaginatedResponse, getPagination } from "../utils/pagination.js";
 import { DrinkService } from "../services/drink.service.js";
@@ -41,7 +41,7 @@ export class DrinkController {
   static async findById(req: Request, res: Response) {
     const id = Number(req.params.id);
     if (isNaN(id)) {
-      throw new AppError("Invalid drink ID.", 400);
+      throw new BadRequestError("Invalid drink ID.");
     }
 
     const drink = await Drink.findByPk(id, {
@@ -49,7 +49,7 @@ export class DrinkController {
     });
 
     if (!drink) {
-      throw new AppError("Drink not found.", 404);
+      throw new NotFoundError("Drink not found.");
     }
 
     return res.status(200).json(drink);
@@ -58,12 +58,12 @@ export class DrinkController {
   static async update(req: Request, res: Response) {
     const id = Number(req.params.id);
     if (isNaN(id)) {
-      throw new AppError("Invalid drink ID.", 400);
+      throw new BadRequestError("Invalid drink ID.");
     }
 
     const drink = await Drink.findByPk(id);
     if (!drink) {
-      throw new AppError("Drink not found.", 404);
+      throw new NotFoundError("Drink not found.");
     }
 
     await DrinkService.applyUpdateData(drink, req.body as DrinkBody);
@@ -78,12 +78,12 @@ export class DrinkController {
   static async delete(req: Request, res: Response) {
     const id = Number(req.params.id);
     if (isNaN(id)) {
-      throw new AppError("Invalid drink ID.", 400);
+      throw new BadRequestError("Invalid drink ID.");
     }
 
     const drink = await Drink.findByPk(id);
     if (!drink) {
-      throw new AppError("Drink not found.", 404);
+      throw new NotFoundError("Drink not found.");
     }
 
     await DrinkService.ensureCanDelete(id);

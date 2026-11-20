@@ -1,5 +1,10 @@
 import { type Request, type Response } from "express";
-import { AppError } from "../errors/AppError.js";
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from "../errors/AppError.js";
 import { Drink, Sale, SaleItem, User } from "../models/index.js";
 import { formatPaginatedResponse, getPagination } from "../utils/pagination.js";
 import { SaleService } from "../services/sale.service.js";
@@ -21,7 +26,7 @@ export class SaleController {
   static async create(req: Request, res: Response) {
     const userId = req.user?.id;
     if (!userId) {
-      throw new AppError("Unauthorized user.", 401);
+      throw new UnauthorizedError("Unauthorized user.");
     }
 
     const sale = await SaleService.createSale(userId, req.body as CreateSaleBody);
@@ -63,7 +68,7 @@ export class SaleController {
   static async findById(req: Request, res: Response) {
     const id = Number(req.params.id);
     if (isNaN(id)) {
-      throw new AppError("Invalid sale ID.", 400);
+      throw new BadRequestError("Invalid sale ID.");
     }
 
     const sale = await Sale.findByPk(id, {
@@ -82,11 +87,11 @@ export class SaleController {
     });
 
     if (!sale) {
-      throw new AppError("Sale not found.", 404);
+      throw new NotFoundError("Sale not found.");
     }
 
     if (req.user?.role === "client" && sale.userId !== req.user.id) {
-      throw new AppError("Access denied to this sale.", 403);
+      throw new ForbiddenError("Access denied to this sale.");
     }
 
     return res.status(200).json(sale);
@@ -95,17 +100,17 @@ export class SaleController {
   static async update(req: Request, res: Response) {
     const id = Number(req.params.id);
     if (isNaN(id)) {
-      throw new AppError("Invalid sale ID.", 400);
+      throw new BadRequestError("Invalid sale ID.");
     }
 
     const sale = await Sale.findByPk(id);
     if (!sale) {
-      throw new AppError("Sale not found.", 404);
+      throw new NotFoundError("Sale not found.");
     }
 
     const { status } = req.body as UpdateSaleBody;
     if (!status || typeof status !== "string" || !status.trim()) {
-      throw new AppError("Valid status is required.", 400);
+      throw new BadRequestError("Valid status is required.");
     }
 
     sale.status = status.trim();
@@ -120,7 +125,7 @@ export class SaleController {
   static async delete(req: Request, res: Response) {
     const id = Number(req.params.id);
     if (isNaN(id)) {
-      throw new AppError("Invalid sale ID.", 400);
+      throw new BadRequestError("Invalid sale ID.");
     }
 
     await SaleService.deleteSale(id);

@@ -1,5 +1,5 @@
 import { DataTypes, ForeignKey, Model } from "sequelize";
-import { AppError } from "../errors/AppError.js";
+import { BadRequestError } from "../errors/AppError.js";
 import { sequelize } from "../database/sequelize.js";
 import { Category } from "./category.js";
 
@@ -14,9 +14,8 @@ export class Drink extends Model {
   public decreaseStock(quantity: number): void {
     const currentStock = Number(this.stock);
     if (currentStock < quantity) {
-      throw new AppError(
-        `Insufficient stock for '${this.name}'. Available: ${currentStock}, Requested: ${quantity}.`,
-        400
+      throw new BadRequestError(
+        `Insufficient stock for '${this.name}'. Available: ${currentStock}, Requested: ${quantity}.`
       );
     }
     this.stock = currentStock - quantity;
