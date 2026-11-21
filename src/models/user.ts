@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
-import { DataTypes, Model } from "sequelize";
+import { DataTypes } from "sequelize";
 import { BadRequestError } from "../errors/AppError.js";
 import { sequelize } from "../database/sequelize.js";
+import { BaseModel } from "./base-model.js";
 
 export interface PasswordValidationResult {
   isValid: boolean;
@@ -9,8 +10,9 @@ export interface PasswordValidationResult {
   message?: string;
 }
 
-export class User extends Model {
-  declare public id: number;
+export class User extends BaseModel {
+  protected static override resourceName = "user";
+
   declare public name: string;
   declare public password: string;
   declare public role: string;
@@ -113,6 +115,12 @@ export class User extends Model {
       // Ignora erro se não for formato bcrypt válido
     }
     return currentPassword === password;
+  }
+
+  public override toSafeObject(): Record<string, unknown> {
+    const data = super.toSafeObject();
+    delete data.password;
+    return data;
   }
 }
 

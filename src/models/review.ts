@@ -1,16 +1,18 @@
-import { DataTypes, ForeignKey, Model } from "sequelize";
+import { DataTypes, ForeignKey } from "sequelize";
 import { sequelize } from "../database/sequelize.js";
+import { BaseModel } from "./base-model.js";
 import { User } from "./user.js";
 import { Drink } from "./drink.js";
 
-export class Review extends Model {
-  declare id: number;
-  declare userId: ForeignKey<User["id"]>;
-  declare drinkId: ForeignKey<Drink["id"]>;
-  declare rating: number;
-  declare comment: string | null;
-  declare readonly createdAt: Date;
-  declare readonly updatedAt: Date;
+export class Review extends BaseModel {
+  protected static override resourceName = "review";
+
+  declare public userId: ForeignKey<User["id"]>;
+  declare public drinkId: ForeignKey<Drink["id"]>;
+  declare public rating: number;
+  declare public comment: string | null;
+  declare public readonly createdAt: Date;
+  declare public readonly updatedAt: Date;
 }
 
 Review.init(

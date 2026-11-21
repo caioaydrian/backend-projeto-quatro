@@ -1,5 +1,5 @@
 import { type Request, type Response } from "express";
-import { BadRequestError, NotFoundError } from "../errors/AppError.js";
+import { NotFoundError } from "../errors/AppError.js";
 import { Category, Drink } from "../models/index.js";
 import { formatPaginatedResponse, getPagination } from "../utils/pagination.js";
 import { DrinkService } from "../services/drink.service.js";
@@ -39,10 +39,7 @@ export class DrinkController {
   }
 
   static async findById(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new BadRequestError("Invalid drink ID.");
-    }
+    const id = Drink.parseId(req.params.id);
 
     const drink = await Drink.findByPk(id, {
       include: [{ model: Category, as: "category", attributes: ["id", "name"] }],
@@ -56,10 +53,7 @@ export class DrinkController {
   }
 
   static async update(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new BadRequestError("Invalid drink ID.");
-    }
+    const id = Drink.parseId(req.params.id);
 
     const drink = await Drink.findByPk(id);
     if (!drink) {
@@ -76,10 +70,7 @@ export class DrinkController {
   }
 
   static async delete(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new BadRequestError("Invalid drink ID.");
-    }
+    const id = Drink.parseId(req.params.id);
 
     const drink = await Drink.findByPk(id);
     if (!drink) {

@@ -1,9 +1,11 @@
-import { DataTypes, Model } from "sequelize";
+import { DataTypes } from "sequelize";
 import { sequelize } from "../database/sequelize.js";
+import { BaseModel } from "./base-model.js";
 
-export class Category extends Model {
-  declare id: number;
-  declare name: string;
+export class Category extends BaseModel {
+  protected static override resourceName = "category";
+
+  declare public name: string;
 }
 
 Category.init(

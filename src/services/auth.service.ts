@@ -15,12 +15,6 @@ interface LoginBody {
   password?: string;
 }
 
-function sanitizeUser(user: User): Record<string, unknown> {
-  const userJson = user.toJSON() as Record<string, unknown>;
-  delete userJson.password;
-  return userJson;
-}
-
 export class AuthService {
   static async register(body: RegisterBody) {
     return UserService.createUser(body, "client");
@@ -60,7 +54,7 @@ export class AuthService {
       }
     );
 
-    return { token, user: sanitizeUser(user) };
+    return { token, user: user.toSafeObject() };
   }
 }
 

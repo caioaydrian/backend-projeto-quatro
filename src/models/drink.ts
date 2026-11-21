@@ -1,15 +1,17 @@
-import { DataTypes, ForeignKey, Model } from "sequelize";
+import { DataTypes, ForeignKey } from "sequelize";
 import { BadRequestError } from "../errors/AppError.js";
 import { sequelize } from "../database/sequelize.js";
+import { BaseModel } from "./base-model.js";
 import { Category } from "./category.js";
 
-export class Drink extends Model {
-  declare id: number;
-  declare name: string;
-  declare price: number;
-  declare stock: number;
-  declare categoryId: ForeignKey<Category["id"]>;
-  declare imageUrl: string | null;
+export class Drink extends BaseModel {
+  protected static override resourceName = "drink";
+
+  declare public name: string;
+  declare public price: number;
+  declare public stock: number;
+  declare public categoryId: ForeignKey<Category["id"]>;
+  declare public imageUrl: string | null;
 
   public decreaseStock(quantity: number): void {
     const currentStock = Number(this.stock);

@@ -1,14 +1,16 @@
-import { DataTypes, ForeignKey, Model } from "sequelize";
+import { DataTypes, ForeignKey } from "sequelize";
 import { sequelize } from "../database/sequelize.js";
+import { BaseModel } from "./base-model.js";
 import { User } from "./user.js";
 
-export class Sale extends Model {
-  declare id: number;
-  declare userId: ForeignKey<User["id"]>;
-  declare totalPrice: number;
-  declare status: string;
-  declare readonly createdAt: Date;
-  declare readonly updatedAt: Date;
+export class Sale extends BaseModel {
+  protected static override resourceName = "sale";
+
+  declare public userId: ForeignKey<User["id"]>;
+  declare public totalPrice: number;
+  declare public status: string;
+  declare public readonly createdAt: Date;
+  declare public readonly updatedAt: Date;
 }
 
 Sale.init(

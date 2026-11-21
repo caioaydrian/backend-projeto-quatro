@@ -78,10 +78,7 @@ export class ReviewController {
   }
 
   static async findById(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new AppError("Invalid review ID.", 400);
-    }
+    const id = Review.parseId(req.params.id);
 
     const review = await Review.findByPk(id, {
       include: [
@@ -106,10 +103,7 @@ export class ReviewController {
   }
 
   static async update(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new AppError("Invalid review ID.", 400);
-    }
+    const id = Review.parseId(req.params.id);
 
     const review = await Review.findByPk(id);
     if (!review) {
@@ -149,10 +143,7 @@ export class ReviewController {
   }
 
   static async delete(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new AppError("Invalid review ID.", 400);
-    }
+    const id = Review.parseId(req.params.id);
 
     const review = await Review.findByPk(id);
     if (!review) {

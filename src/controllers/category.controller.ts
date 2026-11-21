@@ -42,10 +42,7 @@ export class CategoryController {
   }
 
   static async findById(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new AppError("Invalid category ID.", 400);
-    }
+    const id = Category.parseId(req.params.id);
 
     const category = await Category.findByPk(id, {
       include: [{ model: Drink, as: "drinks" }],
@@ -59,10 +56,7 @@ export class CategoryController {
   }
 
   static async update(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new AppError("Invalid category ID.", 400);
-    }
+    const id = Category.parseId(req.params.id);
 
     const category = await Category.findByPk(id);
     if (!category) {
@@ -84,10 +78,7 @@ export class CategoryController {
   }
 
   static async delete(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new AppError("Invalid category ID.", 400);
-    }
+    const id = Category.parseId(req.params.id);
 
     const category = await Category.findByPk(id);
     if (!category) {

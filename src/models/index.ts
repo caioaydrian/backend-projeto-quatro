@@ -1,3 +1,4 @@
+import { BaseModel } from "./base-model.js";
 import { User } from "./user.js";
 import { Drink } from "./drink.js";
 import { Category } from "./category.js";
@@ -43,4 +44,4 @@ Review.belongsTo(User, { foreignKey: "userId", as: "user" });
 Drink.hasMany(Review, { foreignKey: "drinkId", as: "reviews" });
 Review.belongsTo(Drink, { foreignKey: "drinkId", as: "drink" });
 
-export { User, Drink, Category, Sale, SaleItem, Review };
+export { BaseModel, User, Drink, Category, Sale, SaleItem, Review };

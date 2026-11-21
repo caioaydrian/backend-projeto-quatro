@@ -10,12 +10,6 @@ interface UserInput {
   role?: string;
 }
 
-function sanitizeUser(user: User): Record<string, unknown> {
-  const userJson = user.toJSON() as Record<string, unknown>;
-  delete userJson.password;
-  return userJson;
-}
-
 export class UserService {
   static validateRequiredForCreate(body: UserInput): void {
     const { name, email, password, cpf } = body;
@@ -73,7 +67,7 @@ export class UserService {
       role,
     });
 
-    return sanitizeUser(user);
+    return user.toSafeObject();
   }
 
   static async updateUser(id: number, body: UserInput) {
@@ -121,7 +115,7 @@ export class UserService {
     }
 
     await user.save();
-    return sanitizeUser(user);
+    return user.toSafeObject();
   }
 
   static async deleteUser(id: number): Promise<void> {

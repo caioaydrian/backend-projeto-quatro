@@ -1,5 +1,5 @@
 import { type Request, type Response } from "express";
-import { BadRequestError, ForbiddenError, NotFoundError } from "../errors/AppError.js";
+import { ForbiddenError, NotFoundError } from "../errors/AppError.js";
 import { User } from "../models/index.js";
 import { formatPaginatedResponse, getPagination } from "../utils/pagination.js";
 import { UserService } from "../services/user.service.js";
@@ -37,10 +37,7 @@ export class UserController {
   }
 
   static async findById(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new BadRequestError("Invalid user ID.");
-    }
+    const id = User.parseId(req.params.id);
 
     const user = await User.findByPk(id, {
       attributes: { exclude: ["password"] },
@@ -54,10 +51,7 @@ export class UserController {
   }
 
   static async update(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new BadRequestError("Invalid user ID.");
-    }
+    const id = User.parseId(req.params.id);
 
     if (req.user?.id !== id) {
       throw new ForbiddenError("Access denied. You can only edit your own user.");
@@ -72,10 +66,7 @@ export class UserController {
   }
 
   static async delete(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new BadRequestError("Invalid user ID.");
-    }
+    const id = User.parseId(req.params.id);
 
     await UserService.deleteUser(id);
     return res.status(200).json({ message: "User deleted successfully." });

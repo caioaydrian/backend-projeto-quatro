@@ -1,14 +1,16 @@
-import { DataTypes, ForeignKey, Model } from "sequelize";
+import { DataTypes, ForeignKey } from "sequelize";
 import { sequelize } from "../database/sequelize.js";
+import { BaseModel } from "./base-model.js";
 import { Sale } from "./sale.js";
 import { Drink } from "./drink.js";
 
-export class SaleItem extends Model {
-  declare id: number;
-  declare saleId: ForeignKey<Sale["id"]>;
-  declare drinkId: ForeignKey<Drink["id"]>;
-  declare quantity: number;
-  declare unitPrice: number;
+export class SaleItem extends BaseModel {
+  protected static override resourceName = "sale item";
+
+  declare public saleId: ForeignKey<Sale["id"]>;
+  declare public drinkId: ForeignKey<Drink["id"]>;
+  declare public quantity: number;
+  declare public unitPrice: number;
 }
 
 SaleItem.init(

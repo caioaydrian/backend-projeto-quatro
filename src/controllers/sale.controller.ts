@@ -66,10 +66,7 @@ export class SaleController {
   }
 
   static async findById(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new BadRequestError("Invalid sale ID.");
-    }
+    const id = Sale.parseId(req.params.id);
 
     const sale = await Sale.findByPk(id, {
       include: [
@@ -98,10 +95,7 @@ export class SaleController {
   }
 
   static async update(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new BadRequestError("Invalid sale ID.");
-    }
+    const id = Sale.parseId(req.params.id);
 
     const sale = await Sale.findByPk(id);
     if (!sale) {
@@ -123,10 +117,7 @@ export class SaleController {
   }
 
   static async delete(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    if (isNaN(id)) {
-      throw new BadRequestError("Invalid sale ID.");
-    }
+    const id = Sale.parseId(req.params.id);
 
     await SaleService.deleteSale(id);
 

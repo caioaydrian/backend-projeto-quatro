@@ -4,11 +4,12 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 
 const reviewRoutes = Router();
 
+reviewRoutes.get("/", ReviewController.findAll);
+reviewRoutes.get("/:id", ReviewController.findById);
+
 reviewRoutes.use(authMiddleware);
 
 reviewRoutes.post("/", ReviewController.create);
-reviewRoutes.get("/", ReviewController.findAll);
-reviewRoutes.get("/:id", ReviewController.findById);
 reviewRoutes.put("/:id", ReviewController.update);
 reviewRoutes.delete("/:id", ReviewController.delete);
 
