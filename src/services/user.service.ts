@@ -73,12 +73,12 @@ export class UserService {
   static async updateUser(id: number, body: UserInput) {
     const { name, email, password, cpf, role } = body;
 
-    if (!name || !email || !cpf || !password) {
-      throw new BadRequestError("Fields name, email, cpf, and password are required.");
+    if (email !== undefined) {
+      throw new BadRequestError("Email cannot be modified or updated.");
     }
 
-    if (typeof email !== "string" || !User.validateEmail(email)) {
-      throw new BadRequestError("Invalid email format.");
+    if (!name || !cpf || !password) {
+      throw new BadRequestError("Fields name, cpf, and password are required.");
     }
 
     if (typeof name !== "string" || !name.trim()) {
@@ -92,10 +92,6 @@ export class UserService {
     const user = await User.findByPk(id);
     if (!user) {
       throw new NotFoundError("User not found.");
-    }
-
-    if (email.trim().toLowerCase() !== user.email) {
-      throw new BadRequestError("Email cannot be updated.");
     }
 
     const cleanCPF = cpf.replace(/\D/g, "");
