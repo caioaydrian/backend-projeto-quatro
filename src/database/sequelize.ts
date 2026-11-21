@@ -15,7 +15,7 @@ export async function connectToDb(retries = 10, delayMs = 3000): Promise<void> {
       await sequelize.authenticate();
       console.log("Successfully connected to the database!");
 
-      await sequelize.sync({ alter: true });
+      await sequelize.sync();
       console.log("Database synchronized successfully (tables created)!");
 
       await seedAdminUser();
