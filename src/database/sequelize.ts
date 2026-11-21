@@ -9,17 +9,27 @@ export const sequelize = new Sequelize({
   host: process.env.DB_HOST,
 });
 
-export async function connectToDb() {
-  try {
-    await sequelize.authenticate();
-    console.log("Successfully connected to the database!");
+export async function connectToDb(retries = 10, delayMs = 3000): Promise<void> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await sequelize.authenticate();
+      console.log("Successfully connected to the database!");
 
-    await sequelize.sync({ alter: true });
-    console.log("Database synchronized successfully (tables created)!");
+      await sequelize.sync({ alter: true });
+      console.log("Database synchronized successfully (tables created)!");
 
-    await seedAdminUser();
-  } catch (err) {
-    console.error("Database connection/sync error:", err);
+      await seedAdminUser();
+      return;
+    } catch (err) {
+      console.error(
+        `Database connection/sync attempt ${attempt}/${retries} failed. Retrying in ${delayMs / 1000}s...`
+      );
+      if (attempt === retries) {
+        console.error("All database connection attempts failed:", err);
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
   }
 }
 
