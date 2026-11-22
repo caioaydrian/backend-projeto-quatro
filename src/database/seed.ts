@@ -61,7 +61,7 @@ export async function runSeed() {
       { name: "Hot Coffees" },
       { name: "Iced Coffees" },
       { name: "House Specials" },
-      { name: "Bakery & Sides" },
+      { name: "Teas" },
     ];
 
     const categories: Category[] = [];
@@ -74,7 +74,7 @@ export async function runSeed() {
     }
 
     console.log("Seeding drinks...");
-    const [catHot, catIced, catSpecials, catBakery] = categories;
+    const [catHot, catIced, catSpecials, catTeas] = categories;
 
     const drinksData = [
       {
@@ -113,11 +113,11 @@ export async function runSeed() {
         imageUrl: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=500&auto=format&fit=crop&q=60",
       },
       {
-        name: "Butter Croissant",
-        price: 12.0,
-        stock: 20,
-        categoryId: catBakery.id,
-        imageUrl: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&auto=format&fit=crop&q=60",
+        name: "Iced Green Tea",
+        price: 10.0,
+        stock: 45,
+        categoryId: catTeas.id,
+        imageUrl: "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500&auto=format&fit=crop&q=60",
       },
     ];
 
@@ -179,13 +179,13 @@ export async function runSeed() {
 
       const sale2 = await Sale.create({
         userId: client2.id,
-        totalPrice: 18.5 * 1 + 12.0 * 2,
+        totalPrice: 18.5 * 1 + 10.0 * 2,
         status: "pending",
       });
 
       await SaleItem.bulkCreate([
         { saleId: sale2.id, drinkId: drinks[2].id, quantity: 1, unitPrice: 18.5 },
-        { saleId: sale2.id, drinkId: drinks[5].id, quantity: 2, unitPrice: 12.0 },
+        { saleId: sale2.id, drinkId: drinks[5].id, quantity: 2, unitPrice: 10.0 },
       ]);
 
       const sale3 = await Sale.create({
