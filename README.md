@@ -23,3 +23,20 @@ Para subir toda a aplicação (Banco MySQL, Backend, Frontend e Proxy Reverso Ng
 3. Acesse a aplicação no navegador em:
    - Aplicação web: [http://localhost](http://localhost)
    - Apenas o Nginx expõe portas externamente (porta 80), garantindo o isolamento da rede interna dos containers.
+
+## Reset e Seed do Banco de Dados
+
+Para resetar o banco de dados e repopular para apresentações:
+
+```bash
+# Parar containers e apagar o volume do banco
+docker compose down -v
+
+# Subir novamente
+docker compose up -d --build
+
+# Popular dados iniciais
+npm run seed
+# ou via container:
+docker compose exec backend npm run seed
+```

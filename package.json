@@ -17,7 +17,9 @@
   "scripts": {
     "dev": "tsx watch src/app.ts",
     "build": "tsc",
-    "start": "node dist/app.js"
+    "start": "node dist/app.js",
+    "seed": "node dist/database/seed.js",
+    "seed:ts": "tsx src/database/seed.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
