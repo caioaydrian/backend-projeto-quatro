@@ -72,7 +72,7 @@ export class SaleService {
         {
           userId,
           totalPrice: calculatedTotal,
-          status: "completed",
+          status: "pending",
         },
         { transaction }
       );

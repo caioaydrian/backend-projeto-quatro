@@ -36,7 +36,7 @@ Sale.init(
     status: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: "completed", // ex: pending, completed, canceled
+      defaultValue: "pending", // ex: pending, completed, cancelled
     },
   },
   {
