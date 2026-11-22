@@ -47,6 +47,7 @@ export class SaleController {
       where: whereCondition,
       limit,
       offset,
+      distinct: true,
       include: [
         {
           model: User,
